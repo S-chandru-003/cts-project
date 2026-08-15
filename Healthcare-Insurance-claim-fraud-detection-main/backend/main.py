@@ -89,29 +89,64 @@ app.add_middleware(
 # ============================================================
 
 ANALYSES = {}
-MAX_STORED_ANALYSES = 3
+MAX_STORED_ANALYSES = 50
+
+
+def load_default_sample_analysis():
+    """Fallback: Loads and analyzes the built-in sample dataset on-demand."""
+    sample_dir = PROJECT_ROOT / "data" / "raw" / "test"
+    if not sample_dir.exists():
+        sample_dir = PROJECT_ROOT / "data" / "raw" / "train"
+
+    if not sample_dir.exists():
+        return None
+
+    csv_paths = list(sample_dir.glob("*.csv"))
+    if len(csv_paths) < 4:
+        return None
+
+    try:
+        datasets = identify_uploaded_csvs(csv_paths)
+        return analyze_dataset(datasets)
+    except Exception:
+        return None
 
 
 def get_analysis(analysis_id: Optional[str] = None):
-    if analysis_id:
-        analysis = ANALYSES.get(analysis_id)
+    global ANALYSES
 
-        if analysis is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Analysis not found or expired.",
-            )
+    # 1. Exact match if analysis_id is present
+    if analysis_id and analysis_id in ANALYSES:
+        return ANALYSES[analysis_id]
 
-        return analysis
+    # 2. Return latest active analysis if available
+    if ANALYSES:
+        latest_id = next(reversed(ANALYSES))
+        return ANALYSES[latest_id]
 
-    if not ANALYSES:
-        raise HTTPException(
-            status_code=404,
-            detail="No analysis available. Upload a dataset first.",
-        )
+    # 3. Auto-recover / Auto-generate sample analysis on cold restart
+    sample_analysis = load_default_sample_analysis()
+    if sample_analysis is not None:
+        key = analysis_id if analysis_id else "default_sample"
+        ANALYSES[key] = sample_analysis
+        return sample_analysis
 
-    latest_id = next(reversed(ANALYSES))
-    return ANALYSES[latest_id]
+    raise HTTPException(
+        status_code=404,
+        detail="No analysis available. Upload a dataset first.",
+    )
+
+
+@app.on_event("startup")
+def startup_event():
+    try:
+        sample_analysis = load_default_sample_analysis()
+        if sample_analysis is not None:
+            ANALYSES["sample_test_run"] = sample_analysis
+            ANALYSES["default_sample"] = sample_analysis
+    except Exception:
+        pass
+
 
 
 # ============================================================
