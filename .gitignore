@@ -1,0 +1,30 @@
+# Virtual Environments
+**/venv/
+**/.venv/
+venv/
+.venv/
+
+# Node Modules & Build
+**/node_modules/
+node_modules/
+**/dist/
+dist/
+
+# Python Cache
+**/__pycache__/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Notebooks & IDE
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Logs & Temp
+logs/
+**/logs/
+*.log
+.env
