@@ -118,7 +118,7 @@ def get_analysis(analysis_id: Optional[str] = None):
 # BASIC ENDPOINTS
 # ============================================================
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {
         "message": "Healthcare Provider Fraud Detection API is running",
@@ -128,8 +128,8 @@ def root():
     }
 
 
-@app.get("/health")
-@app.get("//health")
+@app.api_route("/health", methods=["GET", "HEAD"])
+@app.api_route("//health", methods=["GET", "HEAD"])
 def health():
     return {
         "status": "healthy",
