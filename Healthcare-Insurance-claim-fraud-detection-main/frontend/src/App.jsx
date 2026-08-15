@@ -63,15 +63,33 @@ export default function App() {
       setTimeout(() => setLoadingStage('Running CatBoost ML Fraud Inference Pipeline...'), 2800);
       setTimeout(() => setLoadingStage('Scoring Claim Anomalies & Building Geographic Visualizations...'), 4200);
 
-      const response = await fetch(`${BACKEND_URL}/predict`, {
-        method: 'POST',
-        body: formData,
-      });
+      let response;
+      try {
+        response = await fetch(`${BACKEND_URL}/predict`, {
+          method: 'POST',
+          body: formData,
+        });
+      } catch (networkErr) {
+        throw new Error('Backend server is offline or unreachable. Please start the FastAPI backend on port 8000 (e.g. run "python main.py").');
+      }
 
-      const data = await response.json();
+      if (!response) {
+        throw new Error('No response received from the backend server.');
+      }
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        // Fallback if response is not JSON
+      }
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Analysis failed. Please ensure the 4 CSV files are valid.');
+        throw new Error(data?.detail || `Analysis failed with status ${response.status} (${response.statusText || 'Error'}).`);
+      }
+
+      if (!data) {
+        throw new Error('Received an empty or invalid response from backend.');
       }
 
       setAnalysisData(data);
@@ -101,14 +119,32 @@ export default function App() {
     try {
       setTimeout(() => setLoadingStage('Extracting Features & Running CatBoost Model...'), 1000);
 
-      const response = await fetch(`${BACKEND_URL}/predict/sample`, {
-        method: 'POST',
-      });
+      let response;
+      try {
+        response = await fetch(`${BACKEND_URL}/predict/sample`, {
+          method: 'POST',
+        });
+      } catch (networkErr) {
+        throw new Error('Backend server is offline or unreachable. Please start the FastAPI backend on port 8000 (e.g. run "python main.py").');
+      }
 
-      const data = await response.json();
+      if (!response) {
+        throw new Error('No response received from the backend server.');
+      }
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        // Fallback if response is not JSON
+      }
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Failed to load sample dataset.');
+        throw new Error(data?.detail || `Failed to load sample dataset with status ${response.status} (${response.statusText || 'Error'}).`);
+      }
+
+      if (!data) {
+        throw new Error('Received an empty or invalid sample dataset response from backend.');
       }
 
       setAnalysisData(data);

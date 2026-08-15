@@ -45,12 +45,28 @@ export default function ProviderCompareModal({
         if (provider2Id) queryParams.append('provider2', provider2Id);
         if (analysisId) queryParams.append('analysis_id', analysisId);
 
-        const res = await fetch(`${backendUrl}/compare?${queryParams.toString()}`);
-        if (!res.ok) {
-          const errJson = await res.json();
-          throw new Error(errJson.detail || 'Could not fetch provider comparison.');
+        let res;
+        try {
+          res = await fetch(`${backendUrl}/compare?${queryParams.toString()}`);
+        } catch {
+          throw new Error('Could not connect to backend server. Please make sure the backend is running.');
         }
-        const data = await res.json();
+
+        if (!res) {
+          throw new Error('No response from backend server.');
+        }
+
+        let data = null;
+        try {
+          data = await res.json();
+        } catch {
+          // non-json response
+        }
+
+        if (!res.ok) {
+          throw new Error(data?.detail || `Could not fetch provider comparison (HTTP ${res.status}).`);
+        }
+
         setCompareData(data);
       } catch (err) {
         setError(err.message);

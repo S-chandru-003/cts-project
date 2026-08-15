@@ -35,12 +35,28 @@ export default function ProviderModal({
       setError(null);
       try {
         const query = analysisId ? `?analysis_id=${analysisId}` : '';
-        const res = await fetch(`${backendUrl}/provider/${providerId}${query}`);
-        if (!res.ok) {
-          const errJson = await res.json();
-          throw new Error(errJson.detail || 'Failed to load provider details.');
+        let res;
+        try {
+          res = await fetch(`${backendUrl}/provider/${providerId}${query}`);
+        } catch {
+          throw new Error('Could not connect to backend server. Please make sure the backend is running.');
         }
-        const json = await res.json();
+
+        if (!res) {
+          throw new Error('No response from backend server.');
+        }
+
+        let json = null;
+        try {
+          json = await res.json();
+        } catch {
+          // non-json response
+        }
+
+        if (!res.ok) {
+          throw new Error(json?.detail || `Failed to load provider details (HTTP ${res.status}).`);
+        }
+
         setData(json);
       } catch (err) {
         setError(err.message);
