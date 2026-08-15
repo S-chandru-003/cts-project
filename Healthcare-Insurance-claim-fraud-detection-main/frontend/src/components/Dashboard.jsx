@@ -612,7 +612,7 @@ export default function Dashboard({
           initialProviderId={compareInitialProvider}
           allProviders={results || []}
           analysisId={analysis_id}
-          backendUrl={import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000"}
+          backendUrl={(import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000").replace(/\/+$/, "")}
           onClose={() => setShowCompareModal(false)}
           onSelectProvider={(id) => onSelectProvider(id)}
         />
