@@ -6,7 +6,7 @@ import Dashboard from './components/Dashboard';
 import ProviderModal from './components/ProviderModal';
 import DataDictionaryModal from './components/DataDictionaryModal';
 
-const BACKEND_URL = 'http://127.0.0.1:8000';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
 
 export default function App() {
   const [backendOnline, setBackendOnline] = useState(false);
