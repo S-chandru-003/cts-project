@@ -12,8 +12,6 @@ __pycache__/
 # IDE
 .vscode/
 
-# Generated files
-data/processed/
 
 .venv/
 __pycache__/

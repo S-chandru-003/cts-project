@@ -33,29 +33,29 @@ TRAIN_FEATURE_PATH = PROJECT_ROOT / "data" / "processed" / "provider_features.cs
 if not MODEL_PATH.exists():
     raise FileNotFoundError(f"Model not found: {MODEL_PATH}")
 
-if not THRESHOLD_PATH.exists():
-    raise FileNotFoundError(f"Threshold file not found: {THRESHOLD_PATH}")
-
-if not TRAIN_FEATURE_PATH.exists():
-    raise FileNotFoundError(
-        f"Training feature file not found: {TRAIN_FEATURE_PATH}"
-    )
-
 model = joblib.load(MODEL_PATH)
 
-with open(THRESHOLD_PATH, "r", encoding="utf-8") as file:
-    THRESHOLD = float(file.read().strip())
+if THRESHOLD_PATH.exists():
+    with open(THRESHOLD_PATH, "r", encoding="utf-8") as file:
+        THRESHOLD = float(file.read().strip())
+else:
+    THRESHOLD = 0.5
 
-_training_columns = pd.read_csv(
-    TRAIN_FEATURE_PATH,
-    nrows=1
-).columns.tolist()
+if TRAIN_FEATURE_PATH.exists():
+    _training_columns = pd.read_csv(
+        TRAIN_FEATURE_PATH,
+        nrows=1
+    ).columns.tolist()
+    EXPECTED_FEATURES = [
+        column
+        for column in _training_columns
+        if column not in {"Provider", "PotentialFraud"}
+    ]
+elif hasattr(model, "feature_names_") and model.feature_names_:
+    EXPECTED_FEATURES = list(model.feature_names_)
+else:
+    EXPECTED_FEATURES = []
 
-EXPECTED_FEATURES = [
-    column
-    for column in _training_columns
-    if column not in {"Provider", "PotentialFraud"}
-]
 
 
 # ============================================================
@@ -2824,12 +2824,11 @@ def provider_claims(
 # ============================================================
 
 if __name__ == "__main__":
-
+    import os
     import uvicorn
-
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run(
         "backend.main:app",
-        host="127.0.0.1",
-        port=8000,
-        reload=True,
+        host="0.0.0.0",
+        port=port,
     )
